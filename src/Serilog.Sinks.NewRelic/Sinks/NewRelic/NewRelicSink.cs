@@ -99,8 +99,7 @@ namespace Serilog.Sinks.NewRelic
             var elapsedTime = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TimedOperationElapsedInMs);
             var operation = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TimedOperationDescription);
 
-            long numeric;
-            if (long.TryParse(elapsedTime.Value.ToString(), out numeric))
+            if (long.TryParse(elapsedTime.Value.ToString(), out var numeric))
             {
                 var safeOperationString = operation.Value.ToString().ToNewRelicSafeString();
                 global::NewRelic.Api.Agent.NewRelic.RecordResponseTimeMetric(safeOperationString, numeric);
@@ -117,9 +116,8 @@ namespace Serilog.Sinks.NewRelic
         private static void EmitMetric(LogEvent logEvent)
         {
             var elapsedTime = logEvent.Properties.First(x => x.Key == PropertyNameConstants.GaugeValue);
-            
-            float numeric;
-            if (float.TryParse(elapsedTime.Value.ToString(), out numeric))
+
+            if (float.TryParse(elapsedTime.Value.ToString(), out var numeric))
             {
                 var operation = logEvent.Properties.First(x => x.Key == PropertyNameConstants.GaugeName);
                 var safeOperationString = operation.Value.ToString().ToNewRelicSafeString();
@@ -183,13 +181,11 @@ namespace Serilog.Sinks.NewRelic
                     continue;
                 }
 
-                bool binary;
-                float numeric;
-                if (bool.TryParse(source.Value.ToString(), out binary))
+                if (bool.TryParse(source.Value.ToString(), out var binary))
                 {
                     properties.Add(safeKey, (float)(binary ? 1 : 0));
                 }
-                else if (float.TryParse(source.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out numeric))
+                else if (float.TryParse(source.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var numeric))
                 {
                     properties.Add(safeKey, numeric);
                 }
