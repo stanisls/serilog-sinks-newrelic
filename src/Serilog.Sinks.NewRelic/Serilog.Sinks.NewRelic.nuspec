@@ -5,20 +5,26 @@
     <version>1.0.2</version>
     <title>NewRelic sink for Serilog</title>
     <authors>Stanislav Sokolov</authors>
-    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <iconUrl>http://serilog.net/images/serilog-sink-nuget.png</iconUrl>
+    <license type="expression">Apache-2.0</license>
+    <icon>serilog-sink-nuget.png</icon>
+    <projectUrl>https://github.com/stanisls/serilog-sinks-newrelic</projectUrl>
+    <repository type="git" url="https://github.com/stanisls/serilog-sinks-newrelic.git" />
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A Serilog sink that writes events to the NewRelic apm application.</description>
+    <description>A Serilog sink that writes events to the NewRelic APM application.</description>
     <releaseNotes>Updated Serilog and NewRelic version dependencies.</releaseNotes>
+    <tags>serilog,logging,newrelic,log</tags>
     <dependencies>
-      <dependency id="Serilog" version="2.8.0" />
-      <dependency id="NewRelic.Agent.Api" version="8.19.353" />
-      <dependency id="Serilog.Sinks.PeriodicBatching" version="2.2.0" />
+      <group targetFramework="net45">
+        <dependency id="Serilog" version="2.8.0" />
+        <dependency id="NewRelic.Agent.Api" version="8.19.353" />
+        <dependency id="Serilog.Sinks.PeriodicBatching" version="2.2.0" />
+      </group>
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Release\Serilog.Sinks.NewRelic.dll" target="lib\Serilog.Sinks.NewRelic.dll" />
-    <file src="bin\Release\Serilog.Sinks.NewRelic.pdb" target="lib\Serilog.Sinks.NewRelic.pdb" />
-    <file src="bin\Release\Serilog.Sinks.NewRelic.XML" target="lib\Serilog.Sinks.NewRelic.XML" />
+    <file src="bin\Release\Serilog.Sinks.NewRelic.dll" target="lib\net45\Serilog.Sinks.NewRelic.dll" />
+    <file src="bin\Release\Serilog.Sinks.NewRelic.pdb" target="lib\net45\Serilog.Sinks.NewRelic.pdb" />
+    <file src="bin\Release\Serilog.Sinks.NewRelic.XML" target="lib\net45\Serilog.Sinks.NewRelic.XML" />
+    <file src="serilog-sink-nuget.png" target="" />
   </files>
 </package>
