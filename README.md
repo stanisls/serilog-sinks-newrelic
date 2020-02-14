@@ -1,5 +1,7 @@
 
-A Serilog sink that writes events to the [NewRelic](https://newrelic.com) apm application.
+A Serilog sink that writes events to the [NewRelic](https://newrelic.com) APM application.
+
+Please consider using [Serilog.Sinks.NewRelicLogs](https://github.com/stanisls/serilog-sinks-newreliclogs) as the preferred way of sending log data directly to the NewRelic Logs API.
 
 ## Getting started
 

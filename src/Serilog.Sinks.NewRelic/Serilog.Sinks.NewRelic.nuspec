@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Serilog.Sinks.NewRelic</id>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <title>NewRelic sink for Serilog</title>
     <authors>Stanislav Sokolov</authors>
     <license type="expression">Apache-2.0</license>
@@ -10,13 +10,16 @@
     <projectUrl>https://github.com/stanisls/serilog-sinks-newrelic</projectUrl>
     <repository type="git" url="https://github.com/stanisls/serilog-sinks-newrelic.git" />
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A Serilog sink that writes events to the NewRelic APM application.</description>
+    <description>
+      A Serilog sink that writes events to the NewRelic APM application.
+      Note that use of Serilog.Sinks.NewRelicLogs is now a preferred way of sending log data directly to NewRelic APIs
+    </description>
     <releaseNotes>Updated Serilog and NewRelic version dependencies.</releaseNotes>
     <tags>serilog,logging,newrelic,log</tags>
     <dependencies>
       <group targetFramework="net45">
         <dependency id="Serilog" version="2.9.0" />
-        <dependency id="NewRelic.Agent.Api" version="8.20.262" />
+        <dependency id="NewRelic.Agent.Api" version="8.23.107" />
         <dependency id="Serilog.Sinks.PeriodicBatching" version="2.2.0" />
       </group>
     </dependencies>
