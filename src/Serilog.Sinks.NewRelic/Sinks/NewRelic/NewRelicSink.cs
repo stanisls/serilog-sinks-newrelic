@@ -183,7 +183,7 @@ namespace Serilog.Sinks.NewRelic
                 }
 
                 if (bool.TryParse(source.Value.ToString(), out var binary))
-                    properties.Add(safeKey, (float)(binary ? 1 : 0));
+                    properties.Add(safeKey, (float) (binary ? 1 : 0));
                 else if (float.TryParse(source.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture,
                     out var numeric))
                     properties.Add(safeKey, numeric);

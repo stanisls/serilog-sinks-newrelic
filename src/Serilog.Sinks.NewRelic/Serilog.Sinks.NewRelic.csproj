@@ -1,8 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Description>
+      A Serilog sink that writes events to the NewRelic APM application.
+      Note that use of Serilog.Sinks.NewRelicLogs is now a preferred way of sending log data directly to NewRelic APIs
+    </Description>
+    <VersionPrefix>2.0.0</VersionPrefix>
     <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
     <RootNamespace>Serilog</RootNamespace>
+    <PackageIcon>serilog-sink-nuget.png</PackageIcon>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
