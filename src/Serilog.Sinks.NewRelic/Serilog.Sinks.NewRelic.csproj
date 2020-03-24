@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="serilog-sink-nuget.png" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NewRelic.Agent.Api" Version="8.25.214" />
     <PackageReference Include="Serilog" Version="2.9.0" />
     <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.3.0" />
