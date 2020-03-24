@@ -7,16 +7,6 @@ Please consider using [Serilog.Sinks.NewRelicLogs](https://github.com/stanisls/s
 
 Install NewRelic NuGetPackage
 
-Configure NewRelic Settings:
-
-```xml
-  <appSettings>
-    <add key="NewRelic.LicenseKey" value="<API Key here>"/>
-    <add key="NewRelic.AgentEnabled" value="true"/>
-    <add key="NewRelic.AppName" value="Serilog.Sinks.NewRelic.Sample"/>
-  </appSettings>
-```
-
 Point the logger to NewRelic:
 
 ```csharp
