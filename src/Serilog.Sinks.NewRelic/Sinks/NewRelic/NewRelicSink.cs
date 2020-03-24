@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using NewRelic.Api.Agent;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
@@ -36,34 +37,9 @@ namespace Serilog.Sinks.NewRelic
                     {
                         // Made up standard for transactions Property = TransactionName, Value = category::name
                         if (logEvent.IsTransactionEvent())
-                        {
-                            var transaction =
-                                logEvent.Properties.First(x => x.Key == PropertyNameConstants.TransactionName);
-                            var transactionValue = transaction.Value.ToString().Replace("\"", "");
-                            var transactionValues = transactionValue.Split(new[]
-                            {
-                                "::"
-                            }, StringSplitOptions.None);
-
-                            if (transactionValues.Length < 2)
-                                continue;
-
-                            var category = transactionValues[0].ToNewRelicSafeString();
-                            var name = transactionValues[1].ToNewRelicSafeString();
-
-                            global::NewRelic.Api.Agent.NewRelic.SetTransactionName(category, name);
-                        }
-
-                        if (logEvent.IsTimerEvent())
-                            EmitResponseTimeMetric(logEvent);
-                        else if (logEvent.IsCounterEvent())
-                            EmitCounterIncrement(logEvent);
-                        else if (logEvent.IsGaugeEvent())
-                            EmitMetric(logEvent);
-                        else if (logEvent.Level == LogEventLevel.Error)
-                            EmitError(logEvent);
+                            LogTransactionEvent(logEvent);
                         else
-                            EmitCustomEvent(logEvent);
+                            LogEvent(logEvent);
                     }
                     catch (Exception ex)
                     {
@@ -72,6 +48,43 @@ namespace Serilog.Sinks.NewRelic
                             logEvent.Timestamp.ToString("o"), logEvent.MessageTemplate.Text, ex);
                     }
             }).ConfigureAwait(false);
+        }
+
+        [Transaction]
+        private void LogTransactionEvent(LogEvent logEvent)
+        {
+            // Made up standard for transactions Property = TransactionName, Value = category::name
+
+            var transaction = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TransactionName);
+            var transactionValue = transaction.Value.ToString().Replace("\"", "");
+            var transactionValues = transactionValue.Split(new[]
+            {
+                "::"
+            }, StringSplitOptions.None);
+
+            if (transactionValues.Length >= 2)
+            {
+                var category = transactionValues[0].ToNewRelicSafeString();
+                var name = transactionValues[1].ToNewRelicSafeString();
+
+                global::NewRelic.Api.Agent.NewRelic.SetTransactionName(category, name);
+            }
+
+            LogEvent(logEvent);
+        }
+
+        private void LogEvent(LogEvent logEvent)
+        {
+            if (logEvent.IsTimerEvent())
+                EmitResponseTimeMetric(logEvent);
+            else if (logEvent.IsCounterEvent())
+                EmitCounterIncrement(logEvent);
+            else if (logEvent.IsGaugeEvent())
+                EmitMetric(logEvent);
+            else if (logEvent.Level == LogEventLevel.Error)
+                EmitError(logEvent);
+            else
+                EmitCustomEvent(logEvent);
         }
 
         private static void EmitResponseTimeMetric(LogEvent logEvent)
@@ -170,7 +183,7 @@ namespace Serilog.Sinks.NewRelic
                 }
 
                 if (bool.TryParse(source.Value.ToString(), out var binary))
-                    properties.Add(safeKey, (float) (binary ? 1 : 0));
+                    properties.Add(safeKey, (float)(binary ? 1 : 0));
                 else if (float.TryParse(source.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture,
                     out var numeric))
                     properties.Add(safeKey, numeric);
