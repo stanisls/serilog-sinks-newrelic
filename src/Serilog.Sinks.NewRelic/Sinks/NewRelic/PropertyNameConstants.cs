@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591
-namespace Serilog.Sinks.NewRelic
+﻿namespace Serilog.Sinks.NewRelic
 {
     public static class PropertyNameConstants
     {

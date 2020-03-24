@@ -1,3 +1,4 @@
+<<<<<<< HEAD:src/Serilog.Sinks.NewRelic/Serilog.Sinks.NewRelic.csproj
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -12,3 +13,19 @@
   </ItemGroup>
 
 </Project>
+=======
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <RootNamespace>Serilog</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NewRelic.Agent.Api" Version="8.25.214" />
+    <PackageReference Include="Serilog" Version="2.9.0" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.3.0" />
+  </ItemGroup>
+
+</Project>
+>>>>>>> 06da357... Working state:Serilog.Sinks.NewRelic/Serilog.Sinks.NewRelic.csproj
