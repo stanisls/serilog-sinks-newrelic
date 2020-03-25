@@ -10,10 +10,12 @@
     <RootNamespace>Serilog</RootNamespace>
     <PackageIcon>serilog-sink-nuget.png</PackageIcon>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Authors>Stanislav Sokolov</Authors>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="serilog-sink-nuget.png" Pack="true" PackagePath=""/>
+    <None Include="serilog-sink-nuget.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
