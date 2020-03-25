@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using NewRelic.Api.Agent;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
@@ -14,11 +15,8 @@ namespace Serilog.Sinks.NewRelic
         public const int DefaultBatchPostingLimit = 1000;
         public static readonly TimeSpan DefaultPeriod = TimeSpan.FromSeconds(2);
 
-        private IFormatProvider FormatProvider { get; }
-        private string CustomEventName { get; }
-
-        public NewRelicSink(string applicationName, int batchSizeLimit, TimeSpan period, string customEventName, IFormatProvider formatProvider = null)
-            : base(batchSizeLimit, period)
+        public NewRelicSink(string applicationName, int batchSizeLimit, TimeSpan period, string customEventName,
+            IFormatProvider formatProvider = null) : base(batchSizeLimit, period)
         {
             CustomEventName = customEventName;
             FormatProvider = formatProvider;
@@ -27,74 +25,73 @@ namespace Serilog.Sinks.NewRelic
             global::NewRelic.Api.Agent.NewRelic.StartAgent();
         }
 
+        private IFormatProvider FormatProvider { get; }
+        private string CustomEventName { get; }
+
         protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
         {
             await Task.Run(() =>
-                {
-                    foreach (var logEvent in events)
+            {
+                foreach (var logEvent in events)
+                    try
                     {
-                        try
-                        {
-                            // Made up standard for transactions Property = TransactionName, Value = category::name
-                            if (logEvent.IsTransactionEvent())
-                            {
-                                var transaction = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TransactionName);
-                                var transactionValue = transaction.Value.ToString().Replace("\"", "");
-                                var transactionValues = transactionValue.Split(new[]
-                                {
-                                    "::"
-                                }, StringSplitOptions.None);
-
-                                if (transactionValues.Length < 2)
-                                {
-                                    continue;
-                                }
-
-                                var category = transactionValues[0].ToNewRelicSafeString();
-                                var name = transactionValues[1].ToNewRelicSafeString();
-
-                                global::NewRelic.Api.Agent.NewRelic.SetTransactionName(category, name);
-                            }
-
-                            if (logEvent.IsTimerEvent())
-                            {
-                                EmitResponseTimeMetric(logEvent);
-                            }
-                            else if (logEvent.IsCounterEvent())
-                            {
-                                EmitCounterIncrement(logEvent);
-                            }
-                            else if (logEvent.IsGaugeEvent())
-                            {
-                                EmitMetric(logEvent);
-                            }
-                            else if (logEvent.Level == LogEventLevel.Error)
-                            {
-                                EmitError(logEvent);
-                            }
-                            else
-                            {
-                                EmitCustomEvent(logEvent);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            SelfLog.WriteLine("Event at {0} with message template {1} could not be sent to NewRelic and was be dropped: {2}",
-                                              logEvent.Timestamp.ToString("o"), logEvent.MessageTemplate.Text, ex);
-                        }
+                        // Made up standard for transactions Property = TransactionName, Value = category::name
+                        if (logEvent.IsTransactionEvent())
+                            LogTransactionEvent(logEvent);
+                        else
+                            LogEvent(logEvent);
                     }
+                    catch (Exception ex)
+                    {
+                        SelfLog.WriteLine(
+                            "Event at {0} with message template {1} could not be sent to NewRelic and was dropped: {2}",
+                            logEvent.Timestamp.ToString("o"), logEvent.MessageTemplate.Text, ex);
+                    }
+            }).ConfigureAwait(false);
+        }
 
-                })
-                .ConfigureAwait(false);
+        [Transaction]
+        private void LogTransactionEvent(LogEvent logEvent)
+        {
+            // Made up standard for transactions Property = TransactionName, Value = category::name
+
+            var transaction = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TransactionName);
+            var transactionValue = transaction.Value.ToString().Replace("\"", "");
+            var transactionValues = transactionValue.Split(new[]
+            {
+                "::"
+            }, StringSplitOptions.None);
+
+            if (transactionValues.Length >= 2)
+            {
+                var category = transactionValues[0].ToNewRelicSafeString();
+                var name = transactionValues[1].ToNewRelicSafeString();
+
+                global::NewRelic.Api.Agent.NewRelic.SetTransactionName(category, name);
+            }
+
+            LogEvent(logEvent);
+        }
+
+        private void LogEvent(LogEvent logEvent)
+        {
+            if (logEvent.IsTimerEvent())
+                EmitResponseTimeMetric(logEvent);
+            else if (logEvent.IsCounterEvent())
+                EmitCounterIncrement(logEvent);
+            else if (logEvent.IsGaugeEvent())
+                EmitMetric(logEvent);
+            else if (logEvent.Level == LogEventLevel.Error)
+                EmitError(logEvent);
+            else
+                EmitCustomEvent(logEvent);
         }
 
         private static void EmitResponseTimeMetric(LogEvent logEvent)
         {
             // Ignore the Beginning Operation
             if (logEvent.Properties.All(x => x.Key != PropertyNameConstants.TimedOperationElapsedInMs))
-            {
                 return;
-            }
 
             var elapsedTime = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TimedOperationElapsedInMs);
             var operation = logEvent.Properties.First(x => x.Key == PropertyNameConstants.TimedOperationDescription);
@@ -128,7 +125,7 @@ namespace Serilog.Sinks.NewRelic
         private void EmitError(LogEvent logEvent)
         {
             var properties = LogEventPropertiesToNewRelicExceptionProperties(logEvent);
-            
+
             if (logEvent.Exception != null)
             {
                 global::NewRelic.Api.Agent.NewRelic.NoticeError(logEvent.Exception, properties);
@@ -145,7 +142,7 @@ namespace Serilog.Sinks.NewRelic
             var properties = LogEventPropertiesToNewRelicCustomEventProperties(logEvent);
             global::NewRelic.Api.Agent.NewRelic.RecordCustomEvent(CustomEventName, properties);
         }
-        
+
         private static IDictionary<string, string> LogEventPropertiesToNewRelicExceptionProperties(LogEvent logEvent)
         {
             var properties = new Dictionary<string, string>();
@@ -155,7 +152,9 @@ namespace Serilog.Sinks.NewRelic
                 var safeKey = source.Key.ToNewRelicSafeString();
                 if (properties.ContainsKey(safeKey))
                 {
-                    SelfLog.WriteLine("Transformed property {0} from event with message template {1} is already in dictionary", safeKey, logEvent.MessageTemplate.Text);
+                    SelfLog.WriteLine(
+                        "Transformed property {0} from event with message template {1} is already in dictionary",
+                        safeKey, logEvent.MessageTemplate.Text);
                     continue;
                 }
 
@@ -169,7 +168,7 @@ namespace Serilog.Sinks.NewRelic
         {
             var properties = new Dictionary<string, object>
             {
-                { PropertyNameConstants.MessageTemplate, logEvent.MessageTemplate.Text }
+                {PropertyNameConstants.MessageTemplate, logEvent.MessageTemplate.Text}
             };
 
             foreach (var source in logEvent.Properties.Where(p => p.Value != null))
@@ -177,22 +176,19 @@ namespace Serilog.Sinks.NewRelic
                 var safeKey = source.Key.ToNewRelicSafeString();
                 if (properties.ContainsKey(safeKey))
                 {
-                    SelfLog.WriteLine("Transformed property {0} from event with message template {1} is already in dictionary", safeKey, logEvent.MessageTemplate.Text);
+                    SelfLog.WriteLine(
+                        "Transformed property {0} from event with message template {1} is already in dictionary",
+                        safeKey, logEvent.MessageTemplate.Text);
                     continue;
                 }
 
                 if (bool.TryParse(source.Value.ToString(), out var binary))
-                {
-                    properties.Add(safeKey, (float)(binary ? 1 : 0));
-                }
-                else if (float.TryParse(source.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var numeric))
-                {
+                    properties.Add(safeKey, (float) (binary ? 1 : 0));
+                else if (float.TryParse(source.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture,
+                    out var numeric))
                     properties.Add(safeKey, numeric);
-                }
                 else
-                {
                     properties.Add(safeKey, source.Value.ToString());
-                }
             }
 
             return properties;
